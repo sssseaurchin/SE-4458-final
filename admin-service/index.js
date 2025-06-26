@@ -1,10 +1,12 @@
 require('dotenv').config();
 const express = require('express');
+const cors = require('cors');
 const app = express();
 const bodyParser = require('body-parser');
 const adminRoutes = require('./routes/admin');
 const db = require('./models');
 
+app.use(cors());
 app.use(bodyParser.json());
 
 // Auth middleware

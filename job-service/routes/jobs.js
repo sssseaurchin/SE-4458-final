@@ -45,4 +45,17 @@ router.post('/', async (req, res) => {
     }
 });
 
+// GET /api/v1/jobs/:id
+router.get('/:id', async (req, res) => {
+    try {
+        const job = await Job.findByPk(req.params.id);
+        if (!job) return res.status(404).json({ error: 'Job not found' });
+        res.json(job);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+
 module.exports = router;

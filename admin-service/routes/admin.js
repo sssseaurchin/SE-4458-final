@@ -23,6 +23,20 @@ router.put('/jobs/:id', async (req, res) => {
     } catch (err) {
         res.status(400).json({ error: err.message });
     }
+})
+
+// DELETE /api/v1/admin/jobs/:id
+router.delete('/jobs/:id', async (req, res) => {
+    try {
+        const job = await Job.findByPk(req.params.id);
+        if (!job) return res.status(404).json({ error: 'Job not found' });
+
+        await job.destroy();
+        res.json({ message: 'Job deleted' });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
 });
 
 module.exports = router;

@@ -1,6 +1,7 @@
 // src/pages/HomePage.js
 import React, { useEffect, useState } from 'react';
 import api from '../api';
+import { Link } from 'react-router-dom';
 
 const HomePage = () => {
     const [jobs, setJobs] = useState([]);
@@ -57,7 +58,9 @@ const HomePage = () => {
             <ul>
                 {jobs.map(job => (
                     <li key={job.id} style={{ marginBottom: '15px' }}>
-                        <strong>{job.title}</strong> — {job.city}, {job.country} <br />
+                        <Link to={`/jobs/${job.id}`}>
+                            <strong>{job.title}</strong>
+                        </Link> — {job.city}, {job.country} <br />
                         <em>{job.company_name}</em><br />
                         {job.description}
                     </li>
