@@ -43,7 +43,7 @@ router.post('/login', async (req, res) => {
         if (!valid) return res.status(401).json({ error: 'Invalid credentials' });
 
         const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET);
-        res.json({ token, user: { id: user.id, email: user.email, name: user.name } });
+        res.json({ token, user: { id: user.id, email: user.email, name: user.name, location: user.location} });
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Server error' });
@@ -65,7 +65,33 @@ router.get('/me', async (req, res) => {
         const user = await User.findByPk(decoded.id);
         if (!user) return res.status(404).json({ error: 'User not found' });
 
-        res.json({ id: user.id, email: user.email, name: user.name });
+        res.json({ id: user.id, email: user.email, name: user.name, location: user.location });
+    } catch (err) {
+        console.error(err);
+        res.status(401).json({ error: 'Invalid token' });
+    }
+});
+
+router.put('/me', async (req, res) => {
+    const auth = req.headers.authorization;
+    if (!auth?.startsWith('Bearer ')) {
+        return res.status(401).json({ error: 'Missing or invalid token' });
+    }
+
+    try {
+        const token = auth.split(' ')[1];
+        const decoded = jwt.verify(token, JWT_SECRET);
+
+        const user = await User.findByPk(decoded.id);
+        if (!user) return res.status(404).json({ error: 'User not found' });
+
+        const { name, location } = req.body;
+
+        if (name) user.name = name;
+        if (location) user.location = location;
+        await user.save();
+
+        res.json({ id: user.id, email: user.email, name: user.name, location: user.location });
     } catch (err) {
         console.error(err);
         res.status(401).json({ error: 'Invalid token' });

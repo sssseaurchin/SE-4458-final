@@ -11,5 +11,8 @@ db.Sequelize = Sequelize;
 db.sequelize = sequelize;
 
 db.Job = require('./job')(sequelize, Sequelize);
+db.Application = require('./application')(sequelize, Sequelize);
+
+db.Application.belongsTo(db.Job, { foreignKey: 'job_id' });
 
 module.exports = db;

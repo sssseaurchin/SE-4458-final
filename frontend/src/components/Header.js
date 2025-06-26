@@ -22,8 +22,10 @@ const Header = () => {
 
             {token ? (
                 <>
-                    <span>Welcome, {user?.name}</span>
-                    <button style={{ marginLeft: '15px' }} onClick={handleLogout}>
+                    <span>
+                        Welcome, <Link to="/me">{user?.name}</Link>
+                    </span>
+                    <button style={{marginLeft: '15px'}} onClick={handleLogout}>
                         Logout
                     </button>
                 </>

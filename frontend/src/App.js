@@ -6,6 +6,8 @@ import JobDetail from './pages/JobDetail';
 import AdminPanel from './pages/AdminPanel';
 import LoginPage from "./pages/LoginPage";
 import Header from './components/Header';
+import UserPage from './pages/UserPage';
+import MyJobsPage from './pages/MyJobsPage';
 
 function App() {
     return (
@@ -16,6 +18,8 @@ function App() {
                 <Route path="/jobs/:id" element={<JobDetail />} />
                 <Route path="/admin" element={<AdminPanel />} />
                 <Route path="/login" element={<LoginPage />} />
+                <Route path="/me" element={<UserPage />} />
+                <Route path="/my-jobs" element={<MyJobsPage />} />
             </Routes>
         </Router>
     );
