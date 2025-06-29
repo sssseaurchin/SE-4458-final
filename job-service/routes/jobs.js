@@ -3,6 +3,8 @@ const router = express.Router();
 const { Op } = require('sequelize');
 const { Job } = require('../models');
 const { Application } = require('../models');
+const adminAuth = require('../middleware/adminAuth');
+const redis = require('../redisClient');
 const jwt = require('jsonwebtoken');
 
 router.get('/', async (req, res) => {
@@ -37,6 +39,12 @@ router.get('/', async (req, res) => {
     }
 });
 
+// DEBUG
+router.get('/test-redis', async (req, res) => {
+    await redis.set('hello', 'world');
+    const value = await redis.get('hello');
+    res.json({ message: value });
+});
 
 router.post('/', async (req, res) => {
     try {
@@ -46,6 +54,33 @@ router.post('/', async (req, res) => {
         res.status(400).json({ error: err.message });
     }
 });
+
+// GET /jobs/autocomplete
+router.get('/autocomplete', async (req, res) => {
+    const { field, query } = req.query;
+    const allowedFields = ['title', 'city'];
+
+    if (!allowedFields.includes(field)) {
+        return res.status(400).json({ error: 'Invalid autocomplete field' });
+    }
+
+    try {
+        const results = await Job.findAll({
+            where: {
+                [field]: { [Op.like]: `%${query}%` }
+            },
+            attributes: [field],
+            group: [field],
+            limit: 10
+        });
+
+        res.json(results.map(r => r[field])); // use bracket notation to safely access dynamic field
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Autocomplete error' });
+    }
+});
+
 
 // GET /api/v1/jobs/applied
 router.get('/applied', async (req, res) => {
@@ -108,6 +143,45 @@ router.post('/:id/apply', async (req, res) => {
     } catch (err) {
         console.error(err);
         res.status(401).json({ error: 'Invalid token' });
+    }
+});
+
+// Admin Stats Route
+router.get('/admin/stats', adminAuth, async (req, res) => {
+    try {
+        const totalJobs = await Job.count();
+        const totalApplications = await Application.count();
+
+        const topJobs = await Job.findAll({
+            order: [['application_count', 'DESC']],
+            limit: 5,
+            attributes: ['title', 'application_count']
+        });
+
+        res.json({ totalJobs, totalApplications, topJobs });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Could not retrieve stats' });
+    }
+});
+
+// GET /api/v1/jobs/admin/:id/applications
+router.get('/admin/:id/applications', adminAuth, async (req, res) => {
+    const { id } = req.params;
+
+    try {
+        const job = await Job.findByPk(id);
+        if (!job) return res.status(404).json({ error: 'Job not found' });
+
+        const applications = await Application.findAll({
+            where: { job_id: id },
+            attributes: ['user_id', 'applied_at', 'createdAt'],
+        });
+
+        res.json({ jobTitle: job.title, applications });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Could not fetch applications for this job' });
     }
 });
 

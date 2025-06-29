@@ -14,12 +14,27 @@ const AdminPanel = () => {
         company_name: ''
     });
     const [jobs, setJobs] = useState([]);
-    const [editingId, setEditingId] = useState(null);
+    const [editingId, setEditingId] = useState(null)
+    const [applications, setApplications] = useState({});
 
     const fetchAllJobs = () => {
         axios.get('http://localhost:3001/api/v1/jobs')
             .then(res => setJobs(res.data.data))
             .catch(err => console.error('Failed to fetch jobs:', err));
+    };
+
+    const fetchApplications = (jobId) => {
+        const token = localStorage.getItem('adminToken');
+        axios.get(`http://localhost:3001/api/v1/jobs/admin/${jobId}/applications`, {
+            headers: { Authorization: `Bearer ${token}` }
+        })
+            .then(res => {
+                setApplications(prev => ({ ...prev, [jobId]: res.data.applications }));
+            })
+            .catch(err => {
+                console.error('Error fetching applications:', err);
+                alert('Could not fetch applications.');
+            });
     };
 
     useEffect(() => {
@@ -41,7 +56,7 @@ const AdminPanel = () => {
             url,
             data: job,
             headers: {
-                Authorization: 'Bearer supersecrettoken123',
+                Authorization: `Bearer ${token}`,
                 'Content-Type': 'application/json',
             }
         })
@@ -71,7 +86,7 @@ const AdminPanel = () => {
 
         axios.delete(`${API_BASE}/jobs/${id}`, {
             headers: {
-                Authorization: 'Bearer supersecrettoken123'
+                Authorization: `Bearer ${token}`,
             }
         })
             .then(() => {
@@ -112,6 +127,19 @@ const AdminPanel = () => {
                         <strong>{j.title}</strong> — {j.city}, {j.country}
                         <button style={{marginLeft: '10px'}} onClick={() => handleEdit(j)}>Edit</button>
                         <button style={{marginLeft: '10px'}} onClick={() => handleDelete(j.id)}>Delete</button>
+                        <button style={{ marginLeft: '10px' }} onClick={() => fetchApplications(j.id)}>View Applications</button>
+
+                        {applications[j.id] && (
+                            <ul style={{ marginTop: '5px', marginLeft: '20px' }}>
+                                {applications[j.id].length === 0 ? (
+                                    <li>No applications yet.</li>
+                                ) : (
+                                    applications[j.id].map((app, idx) => (
+                                        <li key={idx}>User ID: {app.user_id} — {new Date(app.applied_at).toLocaleString()}</li>
+                                    ))
+                                )}
+                            </ul>
+                        )}
                     </li>
                 ))}
             </ul>
