@@ -1,22 +1,21 @@
-require('dotenv').config();
+// admin-service/index.js
 const express = require('express');
-const cors = require('cors');
 const app = express();
 const bodyParser = require('body-parser');
-const adminRoutes = require('./routes/admin');
-const db = require('./models');
-const requireAdminToken = require('./middleware/requireAdminToken');
+const cors = require('cors');
+require('dotenv').config();
 
-app.use(requireAdminToken);
+const adminRoutes = require('./routes/admin');
+// const requireAdminToken = require('./middleware/requireAdminToken');
+
 app.use(cors());
 app.use(bodyParser.json());
+
+app.use('/api/v1/admin/login', adminRoutes);
 
 app.use('/api/v1/admin', adminRoutes);
 
 const PORT = process.env.PORT || 4000;
-
-db.sequelize.sync().then(() => {
-    app.listen(PORT, () => {
-        console.log(`Admin Service running on port ${PORT}`);
-    });
+app.listen(PORT, () => {
+    console.log(`Admin Service running on port ${PORT}`);
 });

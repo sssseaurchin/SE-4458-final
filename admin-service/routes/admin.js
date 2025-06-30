@@ -2,12 +2,40 @@
 const express = require('express');
 const router = express.Router();
 const { Job } = require('../models');
-const jwt = require('jsonwebtoken');
 const { Admin } = require('../models');
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
+
+router.post('/login', async (req, res) => {
+    const { email, password } = req.body;
+    if (!email || !password) return res.status(400).json({ error: 'Missing credentials' });
+
+    try {
+        const admin = await Admin.findOne({ where: { email } });
+        if (!admin) return res.status(403).json({ error: 'Invalid credentials' });
+
+        const valid = await bcrypt.compare(password, admin.password);
+        if (!valid) return res.status(403).json({ error: 'Invalid credentials' });
+
+        const token = jwt.sign(
+            { id: admin.id, email: admin.email, isAdmin: true },
+            process.env.ADMIN_JWT_SECRET,
+            { expiresIn: '7d' }
+        );
+
+        res.json({ token });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
 
 
-// Create new job
-router.post('/jobs', async (req, res) => {
+// All job routes below require admin token
+const requireAdminToken = require('../middleware/requireAdminToken');
+
+// POST /api/v1/admin/jobs – create job
+router.post('/jobs', requireAdminToken, async (req, res) => {
     try {
         const job = await Job.create(req.body);
         res.status(201).json(job);
@@ -16,8 +44,8 @@ router.post('/jobs', async (req, res) => {
     }
 });
 
-// Update existing job
-router.put('/jobs/:id', async (req, res) => {
+// PUT /api/v1/admin/jobs/:id – update job
+router.put('/jobs/:id', requireAdminToken, async (req, res) => {
     try {
         const job = await Job.findByPk(req.params.id);
         if (!job) return res.status(404).json({ error: 'Job not found' });
@@ -27,27 +55,10 @@ router.put('/jobs/:id', async (req, res) => {
     } catch (err) {
         res.status(400).json({ error: err.message });
     }
-})
-
-
-// POST /api/v1/admin/login
-router.post('/login', async (req, res) => {
-    const { email, password } = req.body;
-    try {
-        const admin = await Admin.findOne({ where: { email } });
-        if (!admin || admin.password !== password) {
-            return res.status(401).json({ error: 'Invalid credentials' });
-        }
-
-        const token = jwt.sign({ id: admin.id, email: admin.email, isAdmin: true }, 'admin-secret', { expiresIn: '1h' });
-        res.json({ token });
-    } catch (err) {
-        res.status(500).json({ error: 'Login failed' });
-    }
 });
 
-// DELETE /api/v1/admin/jobs/:id
-router.delete('/jobs/:id', async (req, res) => {
+// DELETE /api/v1/admin/jobs/:id – delete job
+router.delete('/jobs/:id', requireAdminToken, async (req, res) => {
     try {
         const job = await Job.findByPk(req.params.id);
         if (!job) return res.status(404).json({ error: 'Job not found' });

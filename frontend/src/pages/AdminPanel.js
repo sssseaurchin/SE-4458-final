@@ -1,6 +1,7 @@
 // src/pages/AdminPanel.js
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
 const API_BASE = 'http://localhost:4000/api/v1/admin';
 
@@ -14,8 +15,19 @@ const AdminPanel = () => {
         company_name: ''
     });
     const [jobs, setJobs] = useState([]);
-    const [editingId, setEditingId] = useState(null)
+    const [editingId, setEditingId] = useState(null);
     const [applications, setApplications] = useState({});
+
+    const navigate = useNavigate();
+    const token = localStorage.getItem('adminToken');
+
+    useEffect(() => {
+        if (!token) {
+            navigate('/admin/login');
+            return;
+        }
+        fetchAllJobs();
+    }, [token, navigate]);
 
     const fetchAllJobs = () => {
         axios.get('http://localhost:3001/api/v1/jobs')
@@ -24,7 +36,7 @@ const AdminPanel = () => {
     };
 
     const fetchApplications = (jobId) => {
-        const token = localStorage.getItem('adminToken');
+        console.log('Admin Token (fetchApplications):', token);
         axios.get(`http://localhost:3001/api/v1/jobs/admin/${jobId}/applications`, {
             headers: { Authorization: `Bearer ${token}` }
         })
@@ -37,16 +49,13 @@ const AdminPanel = () => {
             });
     };
 
-    useEffect(() => {
-        fetchAllJobs();
-    }, []);
-
     const handleChange = (e) => {
         setJob({ ...job, [e.target.name]: e.target.value });
     };
 
     const handleSubmit = (e) => {
         e.preventDefault();
+        console.log('Admin Token (handleSubmit):', token);
 
         const url = editingId ? `${API_BASE}/jobs/${editingId}` : `${API_BASE}/jobs`;
         const method = editingId ? 'put' : 'post';
@@ -84,6 +93,7 @@ const AdminPanel = () => {
         const confirmed = window.confirm('Are you sure you want to delete this job?');
         if (!confirmed) return;
 
+        console.log('Admin Token (handleDelete):', token);
         axios.delete(`${API_BASE}/jobs/${id}`, {
             headers: {
                 Authorization: `Bearer ${token}`,
@@ -91,7 +101,7 @@ const AdminPanel = () => {
         })
             .then(() => {
                 alert('Job deleted.');
-                fetchAllJobs(); // reload list
+                fetchAllJobs();
             })
             .catch(err => {
                 console.error('Error deleting job:', err);
@@ -99,10 +109,15 @@ const AdminPanel = () => {
             });
     };
 
+    const handleLogout = () => {
+        localStorage.removeItem('adminToken');
+        navigate('/admin/login');
+    };
 
     return (
         <div style={{ padding: '20px' }}>
             <h1>Admin Panel – {editingId ? 'Edit Job' : 'Add Job'}</h1>
+            <button onClick={handleLogout} style={{ float: 'right' }}>Logout</button>
 
             <form onSubmit={handleSubmit}>
                 <input name="title" placeholder="Job Title" value={job.title} onChange={handleChange} required /><br />
@@ -123,10 +138,10 @@ const AdminPanel = () => {
             <h2>Existing Jobs</h2>
             <ul>
                 {jobs.map(j => (
-                    <li key={j.id} style={{marginBottom: '10px'}}>
+                    <li key={j.id} style={{ marginBottom: '10px' }}>
                         <strong>{j.title}</strong> — {j.city}, {j.country}
-                        <button style={{marginLeft: '10px'}} onClick={() => handleEdit(j)}>Edit</button>
-                        <button style={{marginLeft: '10px'}} onClick={() => handleDelete(j.id)}>Delete</button>
+                        <button style={{ marginLeft: '10px' }} onClick={() => handleEdit(j)}>Edit</button>
+                        <button style={{ marginLeft: '10px' }} onClick={() => handleDelete(j.id)}>Delete</button>
                         <button style={{ marginLeft: '10px' }} onClick={() => fetchApplications(j.id)}>View Applications</button>
 
                         {applications[j.id] && (
