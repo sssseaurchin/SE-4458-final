@@ -19,6 +19,12 @@ const SearchResultsPage = () => {
     const cityTimeoutRef = useRef(null);
     const positionTimeoutRef = useRef(null);
 
+    const [page, setPage] = useState(1);
+    const [size, setSize] = useState(10); // optional to make user-adjustable
+
+    const [totalJobs, setTotalJobs] = useState(0);
+    const [totalPages, setTotalPages] = useState(1);
+
     const fetchAutocomplete = (field, query, setter) => {
         if (!query) return setter([]);
         api.get(`/jobs/autocomplete?field=${field}&query=${query}`)
@@ -34,10 +40,17 @@ const SearchResultsPage = () => {
         workingTypes.forEach(type => params.append('working_type', type));
         if (postedWithin) params.append('postedWithin', postedWithin);
 
+        params.append('page', page);
+        params.append('size', size);
+
         api.get(`/jobs?${params.toString()}`)
-            .then(res => setJobs(res.data.data))
+            .then(res => {
+                setJobs(res.data.data);
+                setTotalJobs(res.data.total);
+                setTotalPages(Math.ceil(res.data.total / size));
+            })
             .catch(err => console.error('Fetch error:', err));
-    }, [position, selectedCities, workingTypes, postedWithin]);
+    }, [position, selectedCities, workingTypes, postedWithin, page, size]);
 
     useEffect(() => {
         if (hasInitializedFromURL.current) return;
@@ -59,6 +72,7 @@ const SearchResultsPage = () => {
             clearTimeout(cityTimeoutRef.current);
             clearTimeout(positionTimeoutRef.current);
         };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     useEffect(() => {
@@ -204,11 +218,11 @@ const SearchResultsPage = () => {
                 </form>
 
                 {selectedCities.length > 0 && (
-                    <div style={{ marginBottom: '10px' }}>
+                    <div style={{marginBottom: '10px'}}>
                         <strong>Seçili Şehirler:</strong>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '6px' }}>
+                        <div style={{display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '6px'}}>
                             {selectedCities.map((item, idx) => (
-                                <div key={idx} style={{ display: 'flex', alignItems: 'center' }}>
+                                <div key={idx} style={{display: 'flex', alignItems: 'center'}}>
                                     <span style={{
                                         backgroundColor: '#f0f0f0',
                                         border: '1px solid #ccc',
@@ -229,13 +243,30 @@ const SearchResultsPage = () => {
                                             cursor: 'pointer',
                                             marginLeft: '-8px'
                                         }}
-                                    >×</button>
+                                    >×
+                                    </button>
                                 </div>
                             ))}
                         </div>
                     </div>
                 )}
 
+                <div className="jobs-per-page-container">
+                    <span className="jobs-per-page-label">Jobs per page:</span>
+                    {[5, 10, 20, 50].map(val => (
+                        <button
+                            key={val}
+                            onClick={() => {
+                                setSize(val);
+                                setPage(1);
+                            }}
+                            className={`jobs-per-page-button ${size === val ? 'active' : ''}`}
+                        >
+                            {val}
+                        </button>
+                    ))}
+                </div>
+                <p><strong>{totalJobs}</strong> jobs found</p>
                 <ul className="job-list">
                     {jobs.map(job => (
                         <li key={job.id} className="job-card">
@@ -249,6 +280,15 @@ const SearchResultsPage = () => {
                         </li>
                     ))}
                 </ul>
+                <div style={{marginTop: '20px'}}>
+                    <button onClick={() => setPage(prev => Math.max(prev - 1, 1))} disabled={page === 1}>
+                        Previous
+                    </button>
+                    <span style={{margin: '0 10px'}}>Page {page}</span>
+                    <button onClick={() => setPage(prev => prev + 1)} disabled={page >= totalPages}>
+                        Next
+                    </button>
+                </div>
             </main>
         </div>
     );

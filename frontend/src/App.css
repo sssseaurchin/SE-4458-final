@@ -61,7 +61,13 @@ button {
 }
 
 button:hover {
-  background-color: #007c26;
+  background-color: #00388c;
+  transition: all 0.2s ease;
+  color: white;
+}
+button:disabled {
+  background-color: #aaa;
+  cursor: not-allowed;
 }
 
 ul {
@@ -288,11 +294,14 @@ a:hover {
 }
 
 .job-title-link {
+  font-weight: bold;
+  color: #007c26;
   text-decoration: none;
-  color: #333;
 }
 .job-title-link:hover {
   text-decoration: underline;
+  color: #00388c;
+  transition: all 0.2s ease;
 }
 
 .filter-group {
@@ -344,6 +353,11 @@ a:hover {
   font-weight: bold;
   color: #007c26;
   text-decoration: none;
+}
+.home-job-card a:hover {
+  text-decoration: underline;
+  color: #00388c;
+  transition: all 0.2s ease;
 }
 
 .home-job-card em {
@@ -422,4 +436,33 @@ a:hover {
 .suggestions li {
   padding: 10px;
   cursor: pointer;
+}
+.jobs-per-page-container {
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.jobs-per-page-label {
+  font-weight: bold;
+  margin-right: 6px;
+}
+
+.jobs-per-page-button {
+  padding: 4px 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background-color: #eee;
+  color: #333;
+  cursor: pointer;
+  font-weight: normal;
+  transition: all 0.2s ease;
+}
+
+.jobs-per-page-button.active {
+  background-color: #007c26;
+  color: white;
+  font-weight: bold;
 }
