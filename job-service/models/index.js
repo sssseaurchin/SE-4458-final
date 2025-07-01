@@ -13,6 +13,7 @@ db.sequelize = sequelize;
 db.Job = require('./job')(sequelize, Sequelize);
 db.Application = require('./application')(sequelize, Sequelize);
 
-db.Application.belongsTo(db.Job, { foreignKey: 'job_id' });
+db.Application.belongsTo(db.Job, { foreignKey: 'job_id', onDelete: 'CASCADE'});
+db.Job.hasMany(db.Application, { foreignKey: 'job_id', onDelete: 'CASCADE'});
 
 module.exports = db;

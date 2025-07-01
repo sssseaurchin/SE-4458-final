@@ -1,9 +1,8 @@
 // src/pages/AdminPanel.js
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import api from '../api';
 
-const API_BASE = 'http://localhost:4000/api/v1/admin';
 
 const AdminPanel = () => {
     const [job, setJob] = useState({
@@ -16,7 +15,7 @@ const AdminPanel = () => {
     });
     const [jobs, setJobs] = useState([]);
     const [editingId, setEditingId] = useState(null);
-    const [applications, setApplications] = useState({});
+    const [applications] = useState({});
 
     const navigate = useNavigate();
     const token = localStorage.getItem('adminToken');
@@ -30,24 +29,24 @@ const AdminPanel = () => {
     }, [token, navigate]);
 
     const fetchAllJobs = () => {
-        axios.get('http://localhost:3001/api/v1/jobs')
+        api.get('/jobs')
             .then(res => setJobs(res.data.data))
             .catch(err => console.error('Failed to fetch jobs:', err));
     };
 
-    const fetchApplications = (jobId) => {
-        console.log('Admin Token (fetchApplications):', token);
-        axios.get(`http://localhost:3001/api/v1/jobs/admin/${jobId}/applications`, {
-            headers: { Authorization: `Bearer ${token}` }
-        })
-            .then(res => {
-                setApplications(prev => ({ ...prev, [jobId]: res.data.applications }));
-            })
-            .catch(err => {
-                console.error('Error fetching applications:', err);
-                alert('Could not fetch applications.');
-            });
-    };
+    // const fetchApplications = (jobId) => {
+    //     console.log('Admin Token (fetchApplications):', token);
+    //     axios.get(`http://localhost:3001/api/v1/jobs/admin/${jobId}/applications`, {
+    //         headers: { Authorization: `Bearer ${token}` }
+    //     })
+    //         .then(res => {
+    //             setApplications(prev => ({ ...prev, [jobId]: res.data.applications }));
+    //         })
+    //         .catch(err => {
+    //             console.error('Error fetching applications:', err);
+    //             alert('Could not fetch applications.');
+    //         });
+    // };
 
     const handleChange = (e) => {
         setJob({ ...job, [e.target.name]: e.target.value });
@@ -57,10 +56,10 @@ const AdminPanel = () => {
         e.preventDefault();
         console.log('Admin Token (handleSubmit):', token);
 
-        const url = editingId ? `${API_BASE}/jobs/${editingId}` : `${API_BASE}/jobs`;
+        const url = editingId ? `/admin/jobs/${editingId}` : `/admin/jobs`;
         const method = editingId ? 'put' : 'post';
 
-        axios({
+        api({
             method,
             url,
             data: job,
@@ -94,7 +93,7 @@ const AdminPanel = () => {
         if (!confirmed) return;
 
         console.log('Admin Token (handleDelete):', token);
-        axios.delete(`${API_BASE}/jobs/${id}`, {
+        api.delete(`/admin/jobs/${id}`, {
             headers: {
                 Authorization: `Bearer ${token}`,
             }
@@ -111,7 +110,7 @@ const AdminPanel = () => {
 
     const handleLogout = () => {
         localStorage.removeItem('adminToken');
-        navigate('/admin/login');
+        navigate('/');
     };
 
     return (
@@ -142,7 +141,7 @@ const AdminPanel = () => {
                         <strong>{j.title}</strong> — {j.city}, {j.country}
                         <button style={{ marginLeft: '10px' }} onClick={() => handleEdit(j)}>Edit</button>
                         <button style={{ marginLeft: '10px' }} onClick={() => handleDelete(j.id)}>Delete</button>
-                        <button style={{ marginLeft: '10px' }} onClick={() => fetchApplications(j.id)}>View Applications</button>
+                        {/*<button style={{ marginLeft: '10px' }} onClick={() => fetchApplications(j.id)}>View Applications</button>*/}
 
                         {applications[j.id] && (
                             <ul style={{ marginTop: '5px', marginLeft: '20px' }}>

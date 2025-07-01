@@ -1,7 +1,7 @@
 // src/pages/LoginPage.js
 import React, { useState } from 'react';
-import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import api from '../api';
 
 const LoginPage = () => {
     const [form, setForm] = useState({ email: '', password: '' });
@@ -17,7 +17,7 @@ const LoginPage = () => {
         setError('');
 
         try {
-            const res = await axios.post('http://localhost:5000/api/v1/auth/login', form);
+            const res = await api.post('/auth/login', form)
             const { token, user } = res.data;
 
             localStorage.setItem('token', token);

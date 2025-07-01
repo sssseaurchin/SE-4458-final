@@ -145,6 +145,11 @@ router.post('/:id/apply', async (req, res) => {
             job_id: req.params.id
         });
 
+        await Job.increment('application_count', {
+            by: 1,
+            where: { id: req.params.id }
+        });
+
         res.json({ message: 'Application submitted' });
     } catch (err) {
         console.error(err);

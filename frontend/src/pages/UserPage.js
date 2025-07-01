@@ -1,6 +1,6 @@
 // src/pages/UserPage.js
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../api';
 
 const UserPage = () => {
     const [user, setUser] = useState({ name: '', email: '', location: '' });
@@ -11,7 +11,7 @@ const UserPage = () => {
     useEffect(() => {
         if (!token) return;
 
-        axios.get('http://localhost:5000/api/v1/auth/me', {
+        api.get('/auth/me', {
             headers: { Authorization: `Bearer ${token}` }
         })
             .then(res => setUser(res.data))
@@ -24,7 +24,7 @@ const UserPage = () => {
     };
 
     const handleSave = () => {
-        axios.put('http://localhost:5000/api/v1/auth/me', {
+        api.get('/auth/me', {
             name: user.name,
             location: user.location
         }, {

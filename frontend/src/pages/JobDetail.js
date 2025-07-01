@@ -58,7 +58,8 @@ const JobDetail = () => {
                     <div className="job-meta">
                         <span><strong>{job.company_name}</strong></span>
                         <span>{job.city}, {job.country} — {job.working_type}</span>
-                        <span style={{ fontSize: '12px', color: '#777' }}>
+                        <span>{job.application_count} applicant{job.application_count === 1 ? '' : 's'}</span>
+                        <span style={{fontSize: '12px', color: '#777'}}>
                             Last updated: {new Date(job.updatedAt).toLocaleDateString('tr-TR')}
                         </span>
                     </div>

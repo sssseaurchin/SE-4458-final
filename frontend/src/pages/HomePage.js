@@ -64,45 +64,69 @@ const HomePage = () => {
 
     useEffect(() => {
         const fallbackCity = "Izmir";
+        const token = localStorage.getItem('token');
 
-        navigator.geolocation.getCurrentPosition(
-            async (pos) => {
+        const getCityFromProfileOrLocation = async () => {
+            let cityToUse = '';
+
+            if (token) {
                 try {
-                    const { latitude, longitude } = pos.coords;
-                    const geoRes = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
-                    const data = await geoRes.json();
-                    const cityName = data.address?.city || data.address?.town || data.address?.village;
-
-                    if (cityName) {
-                        setDetectedCity(cityName);
-                        fetchSuggestedJobs(cityName); // Case 3: location detected
-                    } else {
-                        console.warn('Location allowed but city not found, using fallback.');
-                        setDetectedCity(fallbackCity);
-                        fetchSuggestedJobs(fallbackCity); // Case 2
+                    const res = await api.get('/auth/me', {
+                        headers: { Authorization: `Bearer ${token}` }
+                    });
+                    console.log('User profile city:', res.data?.city);
+                    if (res.data?.city) {
+                        cityToUse = res.data?.location || '';
                     }
                 } catch (err) {
-                    console.warn('Location allowed but failed to fetch city, using fallback.');
-                    setDetectedCity(fallbackCity);
-                    fetchSuggestedJobs(fallbackCity); // Case 2
+                    console.warn("Couldn't get city from profile:", err);
                 }
-            },
-            (err) => {
-                console.warn('Location denied by user, picking random jobs.');
-                setDetectedCity(''); // No city label
-                fetchSuggestedJobs(); // Case 1: no city filter
             }
-        );
 
-        const token = localStorage.getItem('token');
-        if (token) {
-            api.get('/search-history', {
-                headers: { Authorization: `Bearer ${token}` }
+            if (cityToUse) {
+                setDetectedCity(cityToUse);
+                await fetchSuggestedJobs(cityToUse);
+            } else {
+                navigator.geolocation.getCurrentPosition(
+                    async (pos) => {
+                        try {
+                            const { latitude, longitude } = pos.coords;
+                            const geoRes = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
+                            const data = await geoRes.json();
+                            const geoCity = data.address?.city || data.address?.town || data.address?.village;
+
+                            if (geoCity) {
+                                setDetectedCity(geoCity);
+                                await fetchSuggestedJobs(geoCity);
+                            } else {
+                                setDetectedCity(fallbackCity);
+                                await fetchSuggestedJobs(fallbackCity);
+                            }
+                        } catch {
+                            setDetectedCity(fallbackCity);
+                            await fetchSuggestedJobs(fallbackCity);
+                        }
+                    },
+                    () => {
+                        fetchSuggestedJobs(); // random
+                    }
+                );
+            }
+        };
+
+        getCityFromProfileOrLocation()
+            .then(() => {
+                if (token) {
+                    api.get('/search-history', {
+                        headers: { Authorization: `Bearer ${token}` }
+                    })
+                        .then(res => setRecentSearches(res.data))
+                        .catch(err => console.error('Failed to fetch recent searches', err));
+                }
             })
-                .then(res => setRecentSearches(res.data))
-                .catch(err => console.error('Failed to fetch recent searches', err));
-        }
+            .catch(err => console.error("Error in location/profile logic:", err));
     }, []);
+
 
     const handleSearch = (e) => {
         e.preventDefault();
