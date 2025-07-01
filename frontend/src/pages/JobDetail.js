@@ -1,8 +1,8 @@
 // src/pages/JobDetail.js
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../api';
+import '../App.css';
 
 const JobDetail = () => {
     const { id } = useParams();
@@ -21,7 +21,7 @@ const JobDetail = () => {
                 headers: { Authorization: `Bearer ${token}` }
             })
                 .then(res => {
-                    const appliedIds = res.data.map(j => j.id);
+                    const appliedIds = res.data.map(j => j.id.toString());
                     if (appliedIds.includes(id)) setHasApplied(true);
                 })
                 .catch(err => console.error('Error checking applied jobs:', err));
@@ -51,16 +51,51 @@ const JobDetail = () => {
     if (!job) return <div style={{ padding: '20px' }}>Loading...</div>;
 
     return (
-        <div style={{padding: '20px'}}>
-            <h1>{job.title}</h1>
-            <p><strong>Company:</strong> {job.company_name}</p>
-            <p><strong>Location:</strong> {job.city}, {job.country}</p>
-            <p><strong>Type:</strong> {job.working_type}</p>
-            <p><strong>Description:</strong></p>
-            <p>{job.description}</p>
-            <button onClick={handleApply} disabled={hasApplied}>
-                {hasApplied ? "Already Applied" : "Apply"}
-            </button>
+        <div className="job-detail-container">
+            <div className="job-main">
+                <div className="job-detail-header">
+                    <h2>{job.title}</h2>
+                    <div className="job-meta">
+                        <span><strong>{job.company_name}</strong></span>
+                        <span>{job.city}, {job.country} — {job.working_type}</span>
+                        <span style={{ fontSize: '12px', color: '#777' }}>
+                            Last updated: {new Date(job.updatedAt).toLocaleDateString('tr-TR')}
+                        </span>
+                    </div>
+                    <button
+                        className="apply-button"
+                        onClick={handleApply}
+                        disabled={hasApplied}
+                    >
+                        {hasApplied ? "Applied" : "Apply"}
+                    </button>
+                </div>
+
+                <div className="job-description">
+                    <h4>Description</h4>
+                    <p>{job.description}</p>
+                </div>
+            </div>
+
+            <aside className="job-sidebar">
+                <h4>Recommended for you</h4>
+                {/*FIX HERE*/}
+                <div className="job-card">
+                    <a className="job-title-link" href="/jobs/1">Frontend Developer</a>
+                    <div>Izmir, Turkey — Remote</div>
+                    <div className="company-name">ExampleCorp</div>
+                </div>
+                <div className="job-card">
+                    <a className="job-title-link" href="/jobs/2">Backend Engineer</a>
+                    <div>Izmir, Turkey — Hybrid</div>
+                    <div className="company-name">CodeFactory</div>
+                </div>
+                <div className="job-card">
+                    <a className="job-title-link" href="/jobs/3">Fullstack Dev</a>
+                    <div>Izmir, Turkey — Fulltime</div>
+                    <div className="company-name">DevWorks</div>
+                </div>
+            </aside>
         </div>
     );
 };

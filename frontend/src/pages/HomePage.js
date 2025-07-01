@@ -1,10 +1,9 @@
 // src/pages/HomePage.js
 import React, { useEffect, useState } from 'react';
 import api from '../api';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 const HomePage = () => {
-    const [jobs, setJobs] = useState([]);
     const [position, setPosition] = useState('');
     const [city, setCity] = useState('');
     const [positionSuggestions, setPositionSuggestions] = useState([]);
@@ -12,9 +11,13 @@ const HomePage = () => {
     const [showPositionSuggestions, setShowPositionSuggestions] = useState(false);
     const [showCitySuggestions, setShowCitySuggestions] = useState(false);
     const [recentSearches, setRecentSearches] = useState([]);
+    const [suggestedJobs, setSuggestedJobs] = useState([]);
+    const [detectedCity, setDetectedCity] = useState('');
+
+    const navigate = useNavigate();
+
     const uniqueSearches = [];
     const seen = new Set();
-
     for (const item of recentSearches) {
         const key = `${item.title}__${item.city}`;
         if (!seen.has(key)) {
@@ -25,32 +28,25 @@ const HomePage = () => {
 
     const fetchAutocomplete = (field, query, setter) => {
         if (!query) return setter([]);
-
         api.get(`/jobs/autocomplete?field=${field}&query=${query}`)
-            .then(res => {
-                // console.log(`Suggestions for ${field}:`, res.data); // DEBUG
-                setter(res.data);
-            })
-            .catch(err => {
-                console.error('Autocomplete error', err);
-            });
+            .then(res => setter(res.data))
+            .catch(err => console.error('Autocomplete error', err));
     };
 
+    const fetchSuggestedJobs = async (city) => {
+        const params = new URLSearchParams({ city, size: 5, page: 1 });
 
-    const fetchJobs = (filters = {}) => {
-        const params = new URLSearchParams({
-            size: 5,
-            page: 1,
-            ...(filters.title && { title: filters.title }),
-            ...(filters.city && { city: filters.city }),
-        });
-
-        api.get(`/jobs?${params.toString()}`)
-            .then(response => {
-                console.log('Filtered jobs:', response.data);
-                setJobs(response.data.data);
-            })
-            .catch(error => console.error('Error fetching jobs:', error));
+        try {
+            const res = await api.get(`/jobs?${params.toString()}`);
+            if (res.data.data.length > 0) {
+                setSuggestedJobs(res.data.data);
+            } else {
+                const fallback = await api.get(`/jobs?size=5&page=1`);
+                setSuggestedJobs(fallback.data.data);
+            }
+        } catch (err) {
+            console.error('Failed to fetch suggested jobs:', err);
+        }
     };
 
     const handleDeleteSearch = (itemToDelete) => {
@@ -67,10 +63,38 @@ const HomePage = () => {
     };
 
     useEffect(() => {
-        fetchJobs(); // initial job list
+        const fallbackCity = "Izmir";
 
-        const token = localStorage.getItem('token'); // or wherever you store it
+        navigator.geolocation.getCurrentPosition(
+            async (pos) => {
+                try {
+                    const { latitude, longitude } = pos.coords;
+                    const geoRes = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
+                    const data = await geoRes.json();
+                    const cityName = data.address?.city || data.address?.town || data.address?.village;
 
+                    if (cityName) {
+                        setDetectedCity(cityName);
+                        fetchSuggestedJobs(cityName); // Case 3: location detected
+                    } else {
+                        console.warn('Location allowed but city not found, using fallback.');
+                        setDetectedCity(fallbackCity);
+                        fetchSuggestedJobs(fallbackCity); // Case 2
+                    }
+                } catch (err) {
+                    console.warn('Location allowed but failed to fetch city, using fallback.');
+                    setDetectedCity(fallbackCity);
+                    fetchSuggestedJobs(fallbackCity); // Case 2
+                }
+            },
+            (err) => {
+                console.warn('Location denied by user, picking random jobs.');
+                setDetectedCity(''); // No city label
+                fetchSuggestedJobs(); // Case 1: no city filter
+            }
+        );
+
+        const token = localStorage.getItem('token');
         if (token) {
             api.get('/search-history', {
                 headers: { Authorization: `Bearer ${token}` }
@@ -80,26 +104,29 @@ const HomePage = () => {
         }
     }, []);
 
-
     const handleSearch = (e) => {
         e.preventDefault();
-        fetchJobs({ title: position, city });
-        const token = localStorage.getItem('token');
 
+        const query = new URLSearchParams();
+        if (position) query.append('title', position);
+        if (city) query.append('city', city);
+
+        const token = localStorage.getItem('token');
         if (token) {
             api.post('/search-history', { title: position, city }, {
                 headers: { Authorization: `Bearer ${token}` }
-            }).catch(() => {}); // silent
+            }).catch(() => {});
         }
+
+        navigate(`/search?${query.toString()}`);
     };
 
     return (
-        <div style={{ padding: '20px' }}>
-            <h1>Job Listings</h1>
+        <div style={{padding: '20px'}}>
+            <h1 style={{backgroundColor : '#007c26', color : "white", padding: '10px 30px',borderRadius: '8px'}}>Welcome to the Site!</h1>
 
             <form onSubmit={handleSearch} style={{marginBottom: '20px'}}>
-                {/* Position Input with Suggestions */}
-                <div style={{ position: 'relative', flex: 1 }}>
+                <div style={{position: 'relative', marginBottom: '10px'}}>
                     <input
                         type="text"
                         placeholder="Position"
@@ -112,20 +139,12 @@ const HomePage = () => {
                         }}
                         onBlur={() => setTimeout(() => setShowPositionSuggestions(false), 100)}
                         onFocus={() => position && setShowPositionSuggestions(true)}
-                        style={{ width: '100%' }}
+                        style={{width: '96%'}}
                     />
                     {showPositionSuggestions && positionSuggestions.length > 0 && (
                         <ul style={{
-                            position: 'absolute',
-                            top: '100%',
-                            left: 0,
-                            right: 0,
-                            background: 'white',
-                            border: '1px solid #ccc',
-                            listStyle: 'none',
-                            margin: 0,
-                            padding: '5px 0',
-                            zIndex: 5
+                            position: 'absolute', top: '100%', left: 0, right: 0, background: 'white',
+                            border: '1px solid #ccc', listStyle: 'none', margin: 0, padding: '5px 0', zIndex: 5
                         }}>
                             {positionSuggestions.map((suggestion, idx) => (
                                 <li
@@ -134,7 +153,7 @@ const HomePage = () => {
                                         setPosition(suggestion);
                                         setShowPositionSuggestions(false);
                                     }}
-                                    style={{ padding: '5px 10px', cursor: 'pointer' }}
+                                    style={{padding: '5px 10px', cursor: 'pointer'}}
                                 >
                                     {suggestion}
                                 </li>
@@ -143,8 +162,7 @@ const HomePage = () => {
                     )}
                 </div>
 
-                {/* City Input with Suggestions */}
-                <div style={{ position: 'relative', flex: 1 }}>
+                <div style={{position: 'relative', marginBottom: '10px'}}>
                     <input
                         type="text"
                         placeholder="City"
@@ -157,20 +175,12 @@ const HomePage = () => {
                         }}
                         onBlur={() => setTimeout(() => setShowCitySuggestions(false), 100)}
                         onFocus={() => city && setShowCitySuggestions(true)}
-                        style={{ width: '100%' }}
+                        style={{width: '96%'}}
                     />
                     {showCitySuggestions && citySuggestions.length > 0 && (
                         <ul style={{
-                            position: 'absolute',
-                            top: '100%',
-                            left: 0,
-                            right: 0,
-                            background: 'white',
-                            border: '1px solid #ccc',
-                            listStyle: 'none',
-                            margin: 0,
-                            padding: '5px 0',
-                            zIndex: 5
+                            position: 'absolute', top: '100%', left: 0, right: 0, background: 'white',
+                            border: '1px solid #ccc', listStyle: 'none', margin: 0, padding: '5px 0', zIndex: 5
                         }}>
                             {citySuggestions.map((suggestion, idx) => (
                                 <li
@@ -179,7 +189,7 @@ const HomePage = () => {
                                         setCity(suggestion);
                                         setShowCitySuggestions(false);
                                     }}
-                                    style={{ padding: '5px 10px', cursor: 'pointer' }}
+                                    style={{padding: '5px 10px', cursor: 'pointer'}}
                                 >
                                     {suggestion}
                                 </li>
@@ -190,58 +200,65 @@ const HomePage = () => {
                 <button type="submit">Search</button>
             </form>
 
-            {/* Search History */}
-            {uniqueSearches.slice(0, 5).map((item, idx) => (
-                <div key={idx} style={{ display: 'flex', alignItems: 'center' }}>
-                    <button
-                        onClick={() => {
-                            setPosition(item.title);
-                            setCity(item.city);
-                            fetchJobs({ title: item.title, city: item.city });
-                        }}
-                        style={{
-                            backgroundColor: '#f0f0f0',
-                            border: '1px solid #ccc',
-                            borderRadius: '20px',
-                            padding: '5px 12px',
-                            cursor: 'pointer',
-                            fontSize: '0.9em',
-                            color: '#333',
-                            marginRight: '6px'
-                        }}
-                    >
-                        {item.title || 'Any'} — {item.city || 'Any'}
-                    </button>
-                    <button
-                        onClick={() => handleDeleteSearch(item)}
-                        style={{
-                            backgroundColor: 'transparent',
-                            border: 'none',
-                            fontSize: '1.1em',
-                            color: '#888',
-                            cursor: 'pointer'
-                        }}
-                        title="Sil"
-                    >
-                        ×
-                    </button>
+            {/* Recent Searches */}
+            <div className="recent-searches-container">
+                {uniqueSearches.length > 0 && (
+                    <>
+                        <h3>Son Aramalarım</h3>
+                        {uniqueSearches.slice(0, 5).map((item, idx) => (
+                            <div key={idx} style={{display: 'flex', alignItems: 'center', marginBottom: '6px'}}>
+                                <button
+                                    onClick={() => {
+                                        setPosition(item.title);
+                                        setCity(item.city);
+                                        navigate(`/search?title=${item.title}&city=${item.city}`);
+                                    }}
+                                    style={{
+                                        backgroundColor: '#f0f0f0',
+                                        border: '1px solid #ccc',
+                                        borderRadius: '20px',
+                                        padding: '5px 12px',
+                                        cursor: 'pointer',
+                                        fontSize: '0.9em',
+                                        color: '#333',
+                                        marginRight: '6px'
+                                    }}
+                                >
+                                    {item.title || 'Any'} — {item.city || 'Any'}
+                                </button>
+                                <button
+                                    onClick={() => handleDeleteSearch(item)}
+                                    style={{
+                                        backgroundColor: 'transparent',
+                                        border: 'none',
+                                        fontSize: '1.1em',
+                                        color: '#888',
+                                        cursor: 'pointer'
+                                    }}
+                                    title="Sil"
+                                >
+                                    ×
+                                </button>
+                            </div>
+                        ))}
+                    </>
+                )}
+            </div>
+            {/* Location-Based Job Suggestions */}
+            <h3>{detectedCity ? `Jobs in ${detectedCity}` : 'Featured Jobs'}</h3>
+            <div className="home-job-card-container">
+                    {suggestedJobs.map(job => (
+                        <div key={job.id} style={{marginBottom: '15px'}} className="home-job-card">
+                            <Link to={`/jobs/${job.id}`}>
+                                <strong>{job.title}</strong>
+                            </Link> — {job.city}, {job.country} <br/>
+                            <em>{job.company_name}</em><br/>
+
+                        </div>
+                    ))}
                 </div>
-            ))}
+            </div>
+            );
+            };
 
-            {/* Job Listings */}
-            <ul>
-                {jobs.map(job => (
-                    <li key={job.id} style={{marginBottom: '15px'}}>
-                        <Link to={`/jobs/${job.id}`}>
-                            <strong>{job.title}</strong>
-                        </Link> — {job.city}, {job.country} <br />
-                        <em>{job.company_name}</em><br />
-                        {job.description}
-                    </li>
-                ))}
-            </ul>
-        </div>
-    );
-};
-
-export default HomePage;
+            export default HomePage;

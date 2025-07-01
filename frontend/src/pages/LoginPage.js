@@ -32,24 +32,24 @@ const LoginPage = () => {
 
     return (
         <div style={{ padding: '20px' }}>
-            <h1>Login</h1>
             <form onSubmit={handleLogin}>
-                <input
+                <h1>Login</h1>
+                <input style={{width : '96%'}}
                     type="email"
                     name="email"
                     placeholder="Email"
                     value={form.email}
                     onChange={handleChange}
                     required
-                /><br />
-                <input
+                /><br/>
+                <input style={{width : '96%'}}
                     type="password"
                     name="password"
                     placeholder="Password"
                     value={form.password}
                     onChange={handleChange}
                     required
-                /><br />
+                /><br/>
                 <button type="submit">Login</button>
             </form>
             {error && <p style={{ color: 'red' }}>{error}</p>}

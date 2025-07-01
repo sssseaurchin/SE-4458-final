@@ -132,16 +132,16 @@ a:hover {
   margin-top: 8px;
 }
 
-.filter-button {
-  margin-top: 15px;
-  width: 100%;
-  background-color: #5a2ca0;
-  color: white;
-  border: none;
-  padding: 10px;
-  border-radius: 5px;
-  cursor: pointer;
-}
+/*.filter-button {*/
+/*  margin-top: 15px;*/
+/*  width: 100%;*/
+/*  background-color: #007c26;*/
+/*  color: white;*/
+/*  border: none;*/
+/*  padding: 10px;*/
+/*  border-radius: 5px;*/
+/*  cursor: pointer;*/
+/*}*/
 
 .results {
   flex: 1;
@@ -162,7 +162,7 @@ a:hover {
 }
 
 .search-bar button {
-  background-color: #5a2ca0;
+  background-color: #007c26;
   color: white;
   border: none;
   padding: 10px 20px;
@@ -189,8 +189,61 @@ a:hover {
   color: #2e2e2e;
 }
 
+.job-detail-container {
+  display: flex;
+  gap: 30px;
+  padding: 30px;
+}
+
+.job-main {
+  flex: 3;
+}
+
+.job-sidebar {
+  flex: 1;
+}
+
+.job-detail-header {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  margin-bottom: 20px;
+}
+
+.job-meta span {
+  display: block;
+  margin-bottom: 6px;
+}
+
+.apply-button {
+  margin-top: 10px;
+  padding: 10px 16px;
+  background-color: #007c26;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.apply-button:disabled {
+  background-color: #aaa;
+  cursor: not-allowed;
+}
+
+.job-description {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.job-sidebar .job-card {
+  margin-bottom: 12px;
+}
+
 .company-name {
-  color: #5a2ca0;
+  color: #007c26;
   margin-top: 5px;
   font-style: italic;
 }
@@ -263,4 +316,105 @@ a:hover {
   flex-shrink: 0;
   flex-grow: 0;
   align-self: center;
+}
+
+.home-job-card-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.home-job-card {
+  display: inline-block;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  border-radius: 12px;
+  padding: 12px 16px;
+  white-space: nowrap;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.home-job-card a {
+  font-weight: bold;
+  color: #007c26;
+  text-decoration: none;
+}
+
+.home-job-card em {
+  color: #333;
+}
+
+.home-job-card .desc {
+  color: #555;
+  margin-top: 6px;
+  font-size: 0.9em;
+}
+.recent-searches-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 12px;
+  align-items: center;
+}
+
+.recent-search-item {
+  display: flex;
+  align-items: center;
+}
+
+.search-pill {
+  background-color: #f0f0f0;
+  border: 1px solid #ccc;
+  border-radius: 20px;
+  padding: 5px 12px;
+  cursor: pointer;
+  font-size: 0.9em;
+  color: #333;
+  margin-right: 4px;
+}
+
+.delete-pill {
+  background-color: transparent;
+  border: none;
+  font-size: 1.1em;
+  color: #888;
+  cursor: pointer;
+  margin-left: -6px;
+}
+.autocomplete-wrapper {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+}
+
+.autocomplete-wrapper input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px;
+  font-size: 1rem;
+  line-height: 1.4;
+  margin: 0;
+}
+
+.suggestions {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  z-index: 10;
+  max-height: 200px;
+  overflow-y: auto;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+  margin-top: 2px; /* avoid overlap */
+  list-style: none; /* this removes the dot */
+  padding: 0;
+}
+
+.suggestions li {
+  padding: 10px;
+  cursor: pointer;
 }

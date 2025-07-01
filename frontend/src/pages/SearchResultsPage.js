@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback, useRef} from 'react';
 import api from '../api';
 import '../App.css';
+import { useLocation } from 'react-router-dom';
 
 const SearchResultsPage = () => {
     const [jobs, setJobs] = useState([]);
@@ -13,6 +14,10 @@ const SearchResultsPage = () => {
     const [showPositionSuggestions, setShowPositionSuggestions] = useState(false);
     const [showCitySuggestions, setShowCitySuggestions] = useState(false);
     const [selectedCities, setSelectedCities] = useState([]);
+    const location = useLocation();
+    const hasInitializedFromURL = useRef(false);
+    const cityTimeoutRef = useRef(null);
+    const positionTimeoutRef = useRef(null);
 
     const fetchAutocomplete = (field, query, setter) => {
         if (!query) return setter([]);
@@ -21,7 +26,7 @@ const SearchResultsPage = () => {
             .catch(err => console.error('Autocomplete error', err));
     };
 
-    const fetchJobs = () => {
+    const fetchJobs = useCallback(() => {
         const params = new URLSearchParams();
 
         if (position) params.append('title', position);
@@ -32,11 +37,33 @@ const SearchResultsPage = () => {
         api.get(`/jobs?${params.toString()}`)
             .then(res => setJobs(res.data.data))
             .catch(err => console.error('Fetch error:', err));
-    };
+    }, [position, selectedCities, workingTypes, postedWithin]);
+
+    useEffect(() => {
+        if (hasInitializedFromURL.current) return;
+
+        const params = new URLSearchParams(location.search);
+        const title = params.get('title');
+        const cityParam = params.get('city');
+
+        if (title) setPosition(title);
+        if (cityParam) setSelectedCities([cityParam]);
+
+        if (title || cityParam) {
+            fetchJobs();
+        }
+
+        hasInitializedFromURL.current = true;
+
+        return () => {
+            clearTimeout(cityTimeoutRef.current);
+            clearTimeout(positionTimeoutRef.current);
+        };
+    }, []);
 
     useEffect(() => {
         fetchJobs();
-    }, [selectedCities, workingTypes, postedWithin]);
+    }, [fetchJobs]);
 
     const handleSearch = (e) => {
         e.preventDefault();
@@ -63,15 +90,23 @@ const SearchResultsPage = () => {
                 <h3>Filtrele</h3>
 
                 <label>Şehir</label>
-                <div style={{position: 'relative'}}>
+                <div className="autocomplete-wrapper">
                     <input
                         type="text"
                         name="city"
                         value={city}
                         onChange={(e) => {
-                            setCity(e.target.value);
-                            fetchAutocomplete('city', e.target.value, setCitySuggestions);
-                            setShowCitySuggestions(true);
+                            const val = e.target.value;
+                            setCity(val);
+                            if (cityTimeoutRef.current) clearTimeout(cityTimeoutRef.current);
+                            if (val.trim()) {
+                                cityTimeoutRef.current = setTimeout(() => {
+                                    fetchAutocomplete('city', val, setCitySuggestions);
+                                    setShowCitySuggestions(true);
+                                }, 300); // 300ms delay
+                            } else {
+                                setCitySuggestions([]);
+                            }
                         }}
                         onBlur={() => setTimeout(() => setShowCitySuggestions(false), 100)}
                         onFocus={() => city && setShowCitySuggestions(true)}
@@ -93,57 +128,45 @@ const SearchResultsPage = () => {
                     )}
                 </div>
 
-                <label>Çalışma Tercihi</label>
+                {/*<label>Çalışma Tercihi</label>*/}
                 <div className="filter-group">
-                <div className="filter-row">
-                        <span>İş Yerinde</span>
-                        <input type="checkbox" value="fulltime" checked={workingTypes.includes('fulltime')}
-                               onChange={() => toggleWorkingType('fulltime')}/>
-                    </div>
-                    <div className="filter-row">
-                        <span>Remote</span>
-                        <input type="checkbox" value="remote" checked={workingTypes.includes('remote')}
-                               onChange={() => toggleWorkingType('remote')}/>
-                    </div>
-                    <div className="filter-row">
-                        <span>Hibrit</span>
-                        <input type="checkbox" value="hybrid" checked={workingTypes.includes('hybrid')}
-                               onChange={() => toggleWorkingType('hybrid')}/>
-                    </div>
+                    {['fulltime', 'remote', 'hybrid'].map(type => (
+                        <div className="filter-row" key={type}>
+                            <span>{type === 'fulltime' ? 'İş Yerinde' : type === 'remote' ? 'Remote' : 'Hibrit'}</span>
+                            <input
+                                type="checkbox"
+                                value={type}
+                                checked={workingTypes.includes(type)}
+                                onChange={() => toggleWorkingType(type)}
+                            />
+                        </div>
+                    ))}
                 </div>
 
-
-                <label>Tarih</label>
+                {/*<label>Tarih</label>*/}
                 <div className="filter-group">
-                    <div className="filter-row">
-                        <span>Tümü</span>
-                        <input type="radio" name="postedWithin" value="" checked={postedWithin === ''}
-                               onChange={(e) => setPostedWithin(e.target.value)}/>
-                    </div>
-                    <div className="filter-row">
-                        <span>Bugün</span>
-                        <input type="radio" name="postedWithin" value="1" checked={postedWithin === '1'}
-                               onChange={(e) => setPostedWithin(e.target.value)}/>
-                    </div>
-                    <div className="filter-row">
-                        <span>Son 3 gün</span>
-                        <input type="radio" name="postedWithin" value="3" checked={postedWithin === '3'}
-                               onChange={(e) => setPostedWithin(e.target.value)}/>
-                    </div>
-                    <div className="filter-row">
-                        <span>Son 7 gün</span>
-                        <input type="radio" name="postedWithin" value="7" checked={postedWithin === '7'}
-                               onChange={(e) => setPostedWithin(e.target.value)}/>
-                    </div>
+                    {['', '1', '3', '7'].map(value => (
+                        <div className="filter-row" key={value}>
+                            <span>
+                                {value === '' ? 'Tümü' : value === '1' ? 'Bugün' : `Son ${value} gün`}
+                            </span>
+                            <input
+                                type="radio"
+                                name="postedWithin"
+                                value={value}
+                                checked={postedWithin === value}
+                                onChange={(e) => setPostedWithin(e.target.value)}
+                            />
+                        </div>
+                    ))}
                 </div>
 
-
-                <button className="filter-button" onClick={handleSearch}>Uygula</button>
+                {/*<button className="filter-button" onClick={handleSearch}>Uygula</button>*/}
             </aside>
 
             <main className="results">
                 <form onSubmit={handleSearch} style={{marginBottom: '20px'}}>
-                    <div style={{position: 'relative', width: '60%', marginBottom: '10px'}}>
+                    <div className="autocomplete-wrapper">
                         <input
                             type="text"
                             placeholder="Position"
@@ -151,8 +174,15 @@ const SearchResultsPage = () => {
                             onChange={(e) => {
                                 const val = e.target.value;
                                 setPosition(val);
-                                fetchAutocomplete('title', val, setPositionSuggestions);
-                                setShowPositionSuggestions(true);
+                                if (positionTimeoutRef.current) clearTimeout(positionTimeoutRef.current);
+                                if (val.trim()) {
+                                    positionTimeoutRef.current = setTimeout(() => {
+                                        fetchAutocomplete('title', val, setPositionSuggestions);
+                                        setShowPositionSuggestions(true);
+                                    }, 300); // 300ms delay
+                                } else {
+                                    setPositionSuggestions([]);
+                                }
                             }}
                             onBlur={() => setTimeout(() => setShowPositionSuggestions(false), 100)}
                             onFocus={() => position && setShowPositionSuggestions(true)}
@@ -164,35 +194,33 @@ const SearchResultsPage = () => {
                                         setPosition(suggestion);
                                         setShowPositionSuggestions(false);
                                     }}>
-                                    {suggestion}
+                                        {suggestion}
                                     </li>
                                 ))}
                             </ul>
                         )}
                     </div>
-                    <button type="submit">Search</button>
+                    {/*<button type="submit">Search</button>*/}
                 </form>
-                {/*Search Filters*/}
+
                 {selectedCities.length > 0 && (
                     <div style={{ marginBottom: '10px' }}>
                         <strong>Seçili Şehirler:</strong>
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '6px' }}>
                             {selectedCities.map((item, idx) => (
                                 <div key={idx} style={{ display: 'flex', alignItems: 'center' }}>
-                                <span style={{
-                                    backgroundColor: '#f0f0f0',
-                                    border: '1px solid #ccc',
-                                    borderRadius: '20px',
-                                    padding: '5px 12px',
-                                    fontSize: '0.9em',
-                                    color: '#333'
-                                }}>{item}</span>
+                                    <span style={{
+                                        backgroundColor: '#f0f0f0',
+                                        border: '1px solid #ccc',
+                                        borderRadius: '20px',
+                                        padding: '5px 12px',
+                                        fontSize: '0.9em',
+                                        color: '#333'
+                                    }}>{item}</span>
                                     <button
-                                        onClick={() => {
-                                            const updated = selectedCities.filter(c => c !== item);
-                                            setSelectedCities(updated);
-                                            fetchJobs(updated);
-                                        }}
+                                        onClick={() =>
+                                            setSelectedCities(prev => prev.filter(c => c !== item))
+                                        }
                                         style={{
                                             backgroundColor: 'transparent',
                                             border: 'none',
@@ -207,6 +235,7 @@ const SearchResultsPage = () => {
                         </div>
                     </div>
                 )}
+
                 <ul className="job-list">
                     {jobs.map(job => (
                         <li key={job.id} className="job-card">
