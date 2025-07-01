@@ -108,10 +108,10 @@ a:hover {
   margin-bottom: 10px;
 }
 
-.filters label {
+.filters div label {
   display: block;
-  margin-top: 10px;
-  font-weight: bold;
+  margin-top: 6px;
+  font-weight: normal;
 }
 
 .filters input[type="text"] {
@@ -123,6 +123,11 @@ a:hover {
 }
 
 .filters input[type="radio"] {
+  margin-right: 6px;
+  margin-top: 8px;
+}
+
+.filters input[type="checkbox"] {
   margin-right: 6px;
   margin-top: 8px;
 }
@@ -197,7 +202,7 @@ a:hover {
 }
 .suggestions {
   position: absolute;
-  top: calc(100% + 2px);  /* Slight spacing */
+  top: calc(100% + 2px);
   left: 0;
   right: 0;
   background: #fff;
@@ -218,6 +223,11 @@ a:hover {
   background-color: #f5f5f5;
 }
 
+.results form > div:first-child input {
+  width: 100%;
+  padding: 10px;
+  font-size: 14px;
+}
 
 .job-title-link {
   text-decoration: none;
@@ -227,3 +237,30 @@ a:hover {
   text-decoration: underline;
 }
 
+.filter-group {
+  border: 2px solid green;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-top: 10px;
+}
+
+.filter-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 2px 12px;
+  font-size: 14px;
+  border-bottom: 1px solid #ccc;
+}
+
+.filter-row:last-child {
+  border-bottom: none;
+}
+
+.filter-row input[type="checkbox"],
+.filter-row input[type="radio"] {
+  width: auto;
+  flex-shrink: 0;
+  flex-grow: 0;
+  align-self: center;
+}

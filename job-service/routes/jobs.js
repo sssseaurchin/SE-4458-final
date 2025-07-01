@@ -11,7 +11,13 @@ router.get('/', async (req, res) => {
     const { city, country, title, working_type, page = 1, size = 10 } = req.query;
     const filters = {};
 
-    if (city) filters.city = { [Op.like]: `%${city}%` };
+    if (city) {
+        if (Array.isArray(city)) {
+            filters.city = { [Op.or]: city.map(c => ({ [Op.like]: `%${c}%` })) };
+        } else {
+            filters.city = { [Op.like]: `%${city}%` };
+        }
+    }
     if (country) filters.country = { [Op.like]: `%${country}%` };
     if (title) filters.title = { [Op.like]: `%${title}%` }; // new
     if (working_type) filters.working_type = working_type;
@@ -95,7 +101,7 @@ router.get('/applied', async (req, res) => {
         const applications = await Application.findAll({
             where: { user_id: payload.id },
             include: [{ model: Job }],
-            order: [['applied_at', 'DESC']]
+            order: [['updatedAt', 'DESC']]
         });
 
         const data = applications.map(app => app.Job);
