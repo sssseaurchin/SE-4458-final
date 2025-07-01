@@ -3,12 +3,14 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../api';
 import '../App.css';
+import { Link } from 'react-router-dom';
 
 const JobDetail = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const [job, setJob] = useState(null);
     const [hasApplied, setHasApplied] = useState(false);
+    const [recommendedJobs, setRecommendedJobs] = useState([]);
 
     useEffect(() => {
         api.get(`/jobs/${id}`)
@@ -27,6 +29,33 @@ const JobDetail = () => {
                 .catch(err => console.error('Error checking applied jobs:', err));
         }
     }, [id]);
+    useEffect(() => {
+        if (!job || !job.city) return;
+
+        const fetchRecommendedJobs = async () => {
+            try {
+                const res = await api.get('/jobs', {
+                    params: {
+                        city: job.city,
+                        size: 5,
+                        page: 1
+                    }
+                });
+
+                const filtered = res.data.data
+                    .filter(j => j.id !== job.id)
+                    .slice(0, 3);
+
+                setRecommendedJobs(filtered);
+            } catch (err) {
+                console.error('Failed to fetch recommended jobs:', err);
+            }
+        };
+
+        fetchRecommendedJobs().catch((err) =>
+            console.error('Unhandled error in fetchRecommendedJobs:', err)
+        );
+    }, [job]);
 
     const handleApply = () => {
         const token = localStorage.getItem('token');
@@ -79,23 +108,18 @@ const JobDetail = () => {
             </div>
 
             <aside className="job-sidebar">
-                <h4>Recommended for you</h4>
-                {/*FIX HERE*/}
-                <div className="job-card">
-                    <a className="job-title-link" href="/jobs/1">Frontend Developer</a>
-                    <div>Izmir, Turkey — Remote</div>
-                    <div className="company-name">ExampleCorp</div>
-                </div>
-                <div className="job-card">
-                    <a className="job-title-link" href="/jobs/2">Backend Engineer</a>
-                    <div>Izmir, Turkey — Hybrid</div>
-                    <div className="company-name">CodeFactory</div>
-                </div>
-                <div className="job-card">
-                    <a className="job-title-link" href="/jobs/3">Fullstack Dev</a>
-                    <div>Izmir, Turkey — Fulltime</div>
-                    <div className="company-name">DevWorks</div>
-                </div>
+                <h3>Recommended Jobs in {job?.city}</h3>
+                {recommendedJobs.length > 0 ? (
+                    recommendedJobs.map(j => (
+                        <div key={j.id} className="job-card">
+                            <Link to={`/jobs/${j.id}`}><strong>{j.title}</strong></Link><br />
+                            {j.city}, {j.country}<br />
+                            <em>{j.company_name}</em>
+                        </div>
+                    ))
+                ) : (
+                    <p>No similar jobs found.</p>
+                )}
             </aside>
         </div>
     );
