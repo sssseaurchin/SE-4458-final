@@ -15,24 +15,26 @@ const Header = () => {
     };
 
     return (
-        <header style={{ padding: '10px', background: '#eee' }}>
-            <Link to="/" style={{ marginRight: '20px' }}>
-                <strong>Career Site</strong>
-            </Link>
+        <div className="header">
+            <header>
+                <Link to="/" style={{ marginRight: '20px' }}>
+                    <strong>Career Site</strong>
+                </Link>
 
-            {token ? (
-                <>
-                    <span>
-                        Welcome, <Link to="/me">{user?.name}</Link>
-                    </span>
-                    <button style={{marginLeft: '15px'}} onClick={handleLogout}>
-                        Logout
-                    </button>
-                </>
-            ) : (
-                <Link to="/login">Login</Link>
-            )}
-        </header>
+                {token ? (
+                    <>
+                        <span>
+                            Welcome, <Link to="/me">{user?.name}</Link>
+                        </span>
+                        <button style={{marginLeft: '15px'}} onClick={handleLogout}>
+                            Logout
+                        </button>
+                    </>
+                ) : (
+                    <Link to="/login">Login</Link>
+                )}
+            </header>
+        </div>
     );
 };
 
