@@ -2,7 +2,7 @@
 
 ## Deployed URLs
 
-* [Azure Deployed Web App Link](https://se4458-final-webapp-eeeye2b8h3efahd4.francecentral-01.azurewebsites.net/)
+* [FrontEnd Hosted on Render](https://se-4458-final-frontend.onrender.com)
 * [Video Demo](https://drive.google.com/drive/folders/1NvrQxaDQ-CbRJzDGkEx8E6fSIZiCKAQf?usp=drive_link)
 
 ---
