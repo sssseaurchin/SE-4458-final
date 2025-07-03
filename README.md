@@ -5,6 +5,7 @@
 * [FrontEnd Hosted on Render](https://se-4458-final-frontend.onrender.com)
 * [Video Demo](https://drive.google.com/drive/folders/1NvrQxaDQ-CbRJzDGkEx8E6fSIZiCKAQf?usp=drive_link)
 
+(For the admin panel, user "admin6@example.com" and "admin1234" username and password respectively.)
 ---
 
 ### Tech Stack
