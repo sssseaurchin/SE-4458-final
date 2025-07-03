@@ -1,7 +1,7 @@
 const { Sequelize } = require('sequelize');
-const sequelize = new Sequelize({
-    dialect: 'sqlite',
-    storage: '../job-service/jobs.sqlite',
+const sequelize = new Sequelize(process.env.DATABASE_URL, {
+    dialect: 'postgres',
+    protocol: 'postgres',
     logging: false
 });
 
