@@ -3,41 +3,44 @@ const { createProxyMiddleware } = require('http-proxy-middleware');
 
 const app = express();
 
-// Job service expects /api/v1/jobs inside its own routes
-// rewrite the incoming /api/v1/jobs to / (empty string)
+// Proxy: Job Service
 app.use('/api/v1/jobs', createProxyMiddleware({
-    target: 'http://localhost:3001',
+    target: process.env.JOB_SERVICE_URL || 'http://localhost:3001',
     changeOrigin: true,
     pathRewrite: { '^/api/v1/jobs': '' },
-    logLevel: 'debug'
+    logLevel: 'debug',
 }));
 
+// Proxy: Search History
 app.use('/api/v1/search-history', createProxyMiddleware({
-    target: 'http://localhost:3001',
+    target: process.env.JOB_SERVICE_URL || 'http://localhost:3001',
     changeOrigin: true,
     pathRewrite: { '^/api/v1/search-history': '/search-history' },
-    logLevel: 'debug'
+    logLevel: 'debug',
 }));
 
+// Proxy: Auth Service
 app.use('/api/v1/auth', createProxyMiddleware({
-    target: 'http://localhost:5000',
+    target: process.env.AUTH_SERVICE_URL || 'http://localhost:5000',
     changeOrigin: true,
     pathRewrite: { '^/api/v1/auth': '' },
-    logLevel: 'debug'
+    logLevel: 'debug',
 }));
 
+// Proxy: Notification Service
 app.use('/api/v1/notifications', createProxyMiddleware({
-    target: 'http://localhost:7000',
+    target: process.env.NOTIFICATION_SERVICE_URL || 'http://localhost:7000',
     changeOrigin: true,
     pathRewrite: { '^/api/v1/notifications': '' },
-    logLevel: 'debug'
+    logLevel: 'debug',
 }));
 
+// Proxy: Admin Service
 app.use('/api/v1/admin', createProxyMiddleware({
-    target: 'http://localhost:4000',
+    target: process.env.ADMIN_SERVICE_URL || 'http://localhost:4000',
     changeOrigin: true,
     pathRewrite: { '^/api/v1/admin': '' },
-    logLevel: 'debug'
+    logLevel: 'debug',
 }));
 
 const PORT = 3002;
