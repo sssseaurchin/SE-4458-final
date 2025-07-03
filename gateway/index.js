@@ -8,7 +8,14 @@ const app = express();
 app.use('/api/v1/jobs', createProxyMiddleware({
     target: 'http://localhost:3001',
     changeOrigin: true,
-    pathRewrite: { '^/api/v1/jobs': '' }, // ✅ this is crucial
+    pathRewrite: { '^/api/v1/jobs': '' },
+    logLevel: 'debug'
+}));
+
+app.use('/api/v1/search-history', createProxyMiddleware({
+    target: 'http://localhost:3001',
+    changeOrigin: true,
+    pathRewrite: { '^/api/v1/search-history': '/search-history' },
     logLevel: 'debug'
 }));
 
@@ -16,6 +23,13 @@ app.use('/api/v1/auth', createProxyMiddleware({
     target: 'http://localhost:5000',
     changeOrigin: true,
     pathRewrite: { '^/api/v1/auth': '' },
+    logLevel: 'debug'
+}));
+
+app.use('/api/v1/notifications', createProxyMiddleware({
+    target: 'http://localhost:7000',
+    changeOrigin: true,
+    pathRewrite: { '^/api/v1/notifications': '' },
     logLevel: 'debug'
 }));
 

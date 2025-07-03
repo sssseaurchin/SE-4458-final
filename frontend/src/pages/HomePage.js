@@ -120,7 +120,10 @@ const HomePage = () => {
                     api.get('/search-history', {
                         headers: { Authorization: `Bearer ${token}` }
                     })
-                        .then(res => setRecentSearches(res.data))
+                        .then(res => {
+                            const result = Array.isArray(res.data) ? res.data : res.data?.data || [];
+                            setRecentSearches(result);
+                        })
                         .catch(err => console.error('Failed to fetch recent searches', err));
                 }
             })

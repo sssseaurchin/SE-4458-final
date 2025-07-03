@@ -1,6 +1,6 @@
 // src/pages/LoginPage.js
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import {Link, useNavigate} from 'react-router-dom';
 import api from '../api';
 
 const LoginPage = () => {
@@ -51,6 +51,9 @@ const LoginPage = () => {
                     required
                 /><br/>
                 <button type="submit">Login</button>
+                <br/>
+                <br/>
+                <Link to="/register">Register</Link>
             </form>
             {error && <p style={{ color: 'red' }}>{error}</p>}
         </div>

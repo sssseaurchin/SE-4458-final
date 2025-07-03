@@ -8,7 +8,7 @@ const redis = require('../redisClient');
 const jwt = require('jsonwebtoken');
 
 router.get('/', async (req, res) => {
-    const { city, country, title, working_type, page = 1, size = 10 } = req.query;
+    const { city, country, title, working_type, page = 1, size = 10, createdAfter } = req.query;
     const filters = {};
 
     if (city) {
@@ -21,6 +21,12 @@ router.get('/', async (req, res) => {
     if (country) filters.country = { [Op.like]: `%${country}%` };
     if (title) filters.title = { [Op.like]: `%${title}%` }; // new
     if (working_type) filters.working_type = working_type;
+    if (createdAfter) {
+        const createdDate = new Date(Number(createdAfter));
+        if (!isNaN(createdDate.getTime())) {
+            filters.createdAt = { [Op.gte]: createdDate };
+        }
+    }
 
     const limit = parseInt(size);
     const offset = (parseInt(page) - 1) * limit;

@@ -11,6 +11,9 @@ import UserPage from './pages/UserPage';
 import MyJobsPage from './pages/MyJobsPage';
 import AdminLogin from "./pages/AdminLogin";
 import SearchResultsPage from "./pages/SearchResultsPage";
+import NotificationsPage from "./pages/NotificationsPage";
+import JobAlertsPage from "./pages/JobAlertsPage";
+import RegisterPage from "./pages/RegisterPage";
 
 function App() {
     const isAdmin = !!localStorage.getItem('adminToken');
@@ -26,7 +29,10 @@ function App() {
                     element={isAdmin ? <AdminPanel /> : <Navigate to="/admin/login" />}
                 />
                 <Route path="/login" element={<LoginPage />} />
+                <Route path="/register" element={<RegisterPage />} />
                 <Route path="/me" element={<UserPage />} />
+                <Route path="/notifications" element={<NotificationsPage />} />
+                <Route path="/alerts" element={<JobAlertsPage />} />
                 <Route path="/my-jobs" element={<MyJobsPage />} />
                 <Route path="/admin/login" element={<AdminLogin onLogin={() => window.location.href = '/admin'} />} />
             </Routes>

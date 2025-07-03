@@ -34,6 +34,9 @@ async function runJobAlertTask() {
                 if (alert.keywords?.length > 0) {
                     alert.keywords.forEach(kw => params.append('title', kw));
                 }
+                if (alert.createdAt) {
+                    params.append('createdAfter', alert.createdAt); // send timestamp in ms
+                }
                 console.log(`Checking jobs for alert: ${params.toString()}`);
 
                 const res = await axios.get(`http://localhost:3002/api/v1/jobs?${params.toString()}`);
@@ -81,7 +84,7 @@ async function runJobAlertTask() {
 (async () => {
     await connectRabbitMQ();
     console.log('🔁 Starting periodic job alert task...');
-    setInterval(runJobAlertTask, 5000); // REVERT BACK TO 60 SECONDS LATER
+    setInterval(runJobAlertTask, 30000); // REVERT BACK TO 60 SECONDS LATER
 })();
 
 module.exports = runJobAlertTask;
