@@ -2,9 +2,7 @@
 
 ## Deployed URLs
 
-* **Frontend:** 
-* **Backend Gateway (API):** 
-* **Notification Service:** 
+* **[Azure Deployed Web App Link](https://se4458-final-webapp-eeeye2b8h3efahd4.francecentral-01.azurewebsites.net/)
 * [Video Demo](https://drive.google.com/drive/folders/1NvrQxaDQ-CbRJzDGkEx8E6fSIZiCKAQf?usp=drive_link)
 
 ---
@@ -44,7 +42,7 @@ This full-stack job portal consists of the following components:
 
 * Notification alerts are based on user-saved alerts and filtered via job title and city.
 * Recommended jobs in job details page is taken by similar location in cities.
-* 
+* The time job alert system takes is hardcoded and is not flexible. It takes exactly 30 seconds each check.
 * Redis stores search history, job alerts, and notifications.
 * PostgreSQL replaces SQLite for deployment.
 * Gateway handles all routing with consistent `/api/v1/...` prefixes.
@@ -141,20 +139,3 @@ Relationships:
 * `notified_jobs:{userId}:{alertHash}` → Redis set of previously-notified job IDs (deduplication).
 
 ---
-
-## Issues and Challenges
-
-* Switching from SQLite to PostgreSQL required updates across all services.
-* Dockerizing multiple services and wiring them up in `docker-compose.yml`.
-* Creating a simple but effective notification/alert system using Redis and RabbitMQ.
-* Limited time to implement optional chatbot feature.
-* Deployement in general. Definitely takes up majority of the time spent.
-
----
-
-
-## Setup & Deployment (optional for instructor)
-
-* `docker-compose up --build`
-* `.env` files provided for frontend and backend
-* Uses port `3002` for Gateway, `3000` for frontend, and custom ports for each service
