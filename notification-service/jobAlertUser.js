@@ -1,6 +1,7 @@
 // notification-service/jobAlertUser.js
 const redis = require('./redisClient');
 const sendNotification = require('./utils/sendNotification');
+const { connectRabbitMQ, publishJobAlert } = require('./rabbitmqClient');
 const axios = require('axios');
 console.log('Job Alert Worker Started');
 
@@ -37,6 +38,12 @@ async function runJobAlertTask() {
 
                 if (jobs.length > 0) {
                     sendNotification(userId, `${jobs.length} new jobs matched your alert!`);
+                    publishJobAlert({
+                        userId,
+                        alert,
+                        matchedJobs: jobs.map(j => j.title),
+                        timestamp: new Date().toISOString()
+                    });
                 }
             }
         }
@@ -45,7 +52,10 @@ async function runJobAlertTask() {
     }
 }
 
-// Optional: run every 30 seconds for dev testing
-setInterval(runJobAlertTask, 30000);
+(async () => {
+    await connectRabbitMQ();
+    console.log('🔁 Starting periodic job alert task...');
+    setInterval(runJobAlertTask, 5000); // REVERT BACK TO 60 SECONDS LATER
+})();
 
 module.exports = runJobAlertTask;
