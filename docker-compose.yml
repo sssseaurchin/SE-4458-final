@@ -1,0 +1,55 @@
+version: '3.9'
+
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: careers
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+
+  gateway:
+    build: ./gateway
+    ports:
+      - "3002:3002"
+    depends_on:
+      - job-service
+      - admin-service
+      - auth-service
+      - notification-service
+
+  job-service:
+    build: ./job-service
+    environment:
+      DB_HOST: postgres
+      DB_NAME: careers
+      DB_USER: user
+      DB_PASS: password
+    depends_on:
+      - postgres
+
+  admin-service:
+    build: ./admin-service
+    environment:
+      DB_HOST: postgres
+      DB_NAME: careers
+      DB_USER: user
+      D
