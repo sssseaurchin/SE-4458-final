@@ -42,12 +42,14 @@ This full-stack job portal consists of the following components:
 
 * No AI chat implemented! Did not have the time.
 
-* No user email check registered, requirements did not specify.
 * Notification alerts are based on user-saved alerts and filtered via job title and city.
+* Recommended jobs in job details page is taken by similar location in cities.
+* 
 * Redis stores search history, job alerts, and notifications.
 * PostgreSQL replaces SQLite for deployment.
 * Gateway handles all routing with consistent `/api/v1/...` prefixes.
-* Only basic user registration/login is implemented; chatbot was skipped due to time constraints.
+* Only basic user registration/login is implemented. Does not check for real emails, was not required to do so.
+* No admin registiration UI implemented, was not required to do so also. But the admin login does work through jwt.
 
 ---
 
@@ -146,6 +148,7 @@ Relationships:
 * Dockerizing multiple services and wiring them up in `docker-compose.yml`.
 * Creating a simple but effective notification/alert system using Redis and RabbitMQ.
 * Limited time to implement optional chatbot feature.
+* Deployement in general. Definitely takes up majority of the time spent.
 
 ---
 
