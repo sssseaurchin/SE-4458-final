@@ -2,7 +2,7 @@
 
 ## Deployed URLs
 
-* **[Azure Deployed Web App Link](https://se4458-final-webapp-eeeye2b8h3efahd4.francecentral-01.azurewebsites.net/)
+* [Azure Deployed Web App Link](https://se4458-final-webapp-eeeye2b8h3efahd4.francecentral-01.azurewebsites.net/)
 * [Video Demo](https://drive.google.com/drive/folders/1NvrQxaDQ-CbRJzDGkEx8E6fSIZiCKAQf?usp=drive_link)
 
 ---
@@ -115,26 +115,48 @@ Relationships:
 
 ---
 
-#### Redis-Based Structures (NoSQL / Notification-Service)
+### Redis-Based Structures (NoSQL)
+#### Notification-Service
 
-* `job_alerts:{userId}` → Array of alert objects:
+* `job_alerts:{userId}` → Redis **string** containing a JSON array of alert objects:
 
   ```json
   [
-    { "keywords": ["backend", "node"], "city": "Istanbul", "createdAt": "2025-07-03T12:00:00Z" }
+    {
+      "keywords": ["backend", "node"],
+      "city": "Istanbul",
+      "createdAt": "2025-07-03T12:00:00Z"
+    }
   ]
   ```
 
-* `user_notifications:{userId}` → Redis list of notification objects:
+* `user_notifications:{userId}` → Redis **list** of notification objects:
 
   ```json
   {
     "message": "3 new jobs matched your alert!",
-    "alert": { "keywords": [...], "city": "Izmir" },
+    "alert": {
+      "keywords": ["backend"],
+      "city": "Izmir"
+    },
     "matchedJobs": ["Frontend Dev", "React Engineer"],
     "timestamp": "2025-07-03T12:30:00Z"
   }
   ```
+
+* `notified_jobs:{userId}:{alertHash}` → Redis **set** of job IDs already notified for a specific alert.
+
+#### SearchHistory (Search UI Memory)
+
+* `recent_searches:{userId}` → Redis **list** of recent search query objects (max 10, expires in 30 days):
+
+  ```json
+  {
+    "title": "developer",
+    "city": "Istanbul",
+    "time": 1720000000000
+  }
+  ``` 
 
 * `notified_jobs:{userId}:{alertHash}` → Redis set of previously-notified job IDs (deduplication).
 
