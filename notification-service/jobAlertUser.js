@@ -1,9 +1,12 @@
 // notification-service/jobAlertUser.js
+
 const redis = require('./redisClient');
 const sendNotification = require('./utils/sendNotification');
+const storeNotification = require('./utils/storeNotification');
 const { connectRabbitMQ, publishJobAlert } = require('./rabbitmqClient');
 const axios = require('axios');
 console.log('Job Alert Worker Started');
+const crypto = require('crypto');
 
 async function runJobAlertTask() {
     console.log('Running job alert task...');
@@ -36,14 +39,37 @@ async function runJobAlertTask() {
                 const res = await axios.get(`http://localhost:3002/api/v1/jobs?${params.toString()}`);
                 const jobs = res.data.data;
 
-                if (jobs.length > 0) {
-                    sendNotification(userId, `${jobs.length} new jobs matched your alert!`);
+                const alertHash = crypto
+                    .createHash('sha1')
+                    .update(JSON.stringify(alert))
+                    .digest('hex');
+
+                const notifiedKey = `notified_jobs:${userId}:${alertHash}`;
+
+                const notifiedJobIdsArray = await redis.SMEMBERS(notifiedKey);
+                const notifiedJobIds = new Set(notifiedJobIdsArray);
+
+                console.log('Matched job IDs:', jobs.map(j => j.id));
+                console.log('Already notified IDs:', [...notifiedJobIds]);
+                const newJobs = jobs.filter(job => !notifiedJobIds.has(String(job.id)));
+
+                if (newJobs.length > 0) {
+                    const timestamp = new Date().toISOString();
+
+                    sendNotification(userId, `${newJobs.length} new jobs matched your alert!`);
                     publishJobAlert({
                         userId,
                         alert,
-                        matchedJobs: jobs.map(j => j.title),
-                        timestamp: new Date().toISOString()
+                        matchedJobs: newJobs.map(j => j.title),
+                        timestamp
                     });
+
+                    await storeNotification(userId, alert, newJobs);
+
+                    const pipeline = redis.multi();
+                    newJobs.forEach(job => pipeline.SADD(notifiedKey, job.id));
+                    pipeline.EXPIRE(notifiedKey, 7 * 24 * 60 * 60); // optional TTL: 7 days
+                    await pipeline.exec();
                 }
             }
         }
