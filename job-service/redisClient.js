@@ -1,8 +1,10 @@
 // job-service/redisClient.js
 const redis = require('redis');
 
+const redisUrl = process.env.REDIS_URL || 'redis://127.0.0.1:6379';
+
 const client = redis.createClient({
-    url: 'redis://172.29.201.186:6379'
+  url: redisUrl,
 });
 
 client.on('error', (err) => console.error('Redis Client Error', err));
