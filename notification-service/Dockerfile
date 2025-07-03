@@ -2,11 +2,11 @@ FROM node:18-alpine
 
 WORKDIR /app
 
+RUN apk update && apk add supervisor
+
 COPY package*.json ./
 RUN npm install
 
 COPY . .
 
-RUN npm install -g supervisor
-
-CMD ["supervisord", "-c", "supervisord.conf"]
+CMD ["supervisord", "-c", "/app/supervisord.conf"]
